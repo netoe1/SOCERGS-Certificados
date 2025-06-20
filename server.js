@@ -14,6 +14,8 @@ const fs = require("fs").promises;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set("view engine", "ejs");
+
 // 1. Configurações de segurança aprimoradas
 app.use(
   helmet({

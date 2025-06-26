@@ -1,39 +1,51 @@
 const fs = require("fs");
-const csvParser = require("csv-parser");
-const path = require("path");
+let csvParser;
 
-if (!fs || !csvParser || !path) {
-  throw new Error("[csvReader.js-err]: Módulo fs e csv-parser não instalados!");
+try {
+  csvParser = require("csv-parser");
+} catch {
+  throw new Error(
+    "[csvReader.js-err]: Módulo 'csv-parser' não instalado. Rode: npm install csv-parser"
+  );
 }
 
-const readCSV = (csvfile) => {
-  console.log(csvfile);
-  if (!csvfile.toString().includes(".csv")) {
-    // Verifica se o arquivo é da extensão é .csv
-    throw new Error("[csvReader.js-err]:O arquivo não é válido para isso.");
-  }
-  // csvfile = path.join(__dirname, csvfile); // Faz o tratamento do path.join()
+//
+// ===== Região: Função readCSV =====
+// Função responsável por ler um arquivo CSV e retornar os dados em formato de array de objetos.
+// - Recebe o caminho do arquivo (relativo ou absoluto).
+// - Verifica se o caminho termina com ".csv".
+// - Verifica se o arquivo existe no sistema.
+// - Usa streams e o pacote csv-parser para ler e parsear os dados.
+// - Retorna uma Promise que resolve com os dados lidos.
+//
 
-  if (!fs.existsSync(csvfile)) {
+const readCSV = (csvfilePath) => {
+  if (!csvfilePath.endsWith(".csv")) {
+    throw new Error("[csvReader.js-err]: O arquivo não é válido.");
+  }
+
+  if (!fs.existsSync(csvfilePath)) {
     throw new Error("[csvReader.js-err]: O arquivo não existe.");
   }
+
   return new Promise((resolve, reject) => {
     const resultados = [];
 
-    fs.createReadStream(csvfile)
+    fs.createReadStream(csvfilePath)
       .pipe(csvParser())
       .on("data", (dados) => resultados.push(dados))
-      .on("end", () => {
-        console.log(
-          "[csv-reader.js-info]: Terminou o processamento do arquivo."
-        );
-        resolve(resultados); // retorna os dados lidos
-      })
-      .on("error", (err) => {
-        reject(new Error("Erro ao dar o parse no CSV: " + err.message));
-      });
+      .on("end", () => resolve(resultados))
+      .on("error", (err) =>
+        reject(new Error("Erro ao ler o CSV: " + err.message))
+      );
   });
 };
 
-const dado = readCSV("teste.csv");
-console.log(JSON.stringify(dado));
+(async () => {
+  try {
+    const dados = await readCSV("teste.csv");
+    console.log(JSON.stringify(dados, null, 2));
+  } catch (err) {
+    console.error(err.message);
+  }
+})();

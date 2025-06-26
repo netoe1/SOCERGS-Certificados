@@ -151,10 +151,16 @@ function validateCRM(crm) {
 
   const trimmedCRM = crm.trim();
 
-  if (!/^\d{6}$/.test(trimmedCRM)) {
+  // Ely Neto: Adicionei essa linha para verificar as duas possibilidades, com 5 caracteres ou 6 caracteres.
+
+  if (!/^\d{5,6}$/.test(trimmedCRM)) {
+    console.info("[validadeCRM-INFO]:Não passou no teste REGEX.");
     return false;
   }
 
+  console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
+
+  // Ely Neto: Essa função detecta padrões repetitivos? Não entendi, me explica depois
   if (
     trimmedCRM === "000000" ||
     trimmedCRM === "123456" ||
@@ -195,6 +201,7 @@ app.post("/buscar", async (req, res) => {
     const { crm } = req.body;
 
     if (!validateCRM(crm)) {
+      console.log("[ERRO]: O crm não é válido!");
       return res.render("index", {
         title: "Sistema de Certificados",
         error: "CRM inválido. Digite um CRM válido com 6 dígitos.",

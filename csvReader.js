@@ -1,3 +1,5 @@
+// Task do ClickUp: https://app.clickup.com/t/86a9t2wzw
+
 const fs = require("fs");
 let csvParser;
 

@@ -161,14 +161,14 @@ function validateCRM(crm) {
   console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
 
   // Ely Neto: Essa função detecta padrões repetitivos? Não entendi, me explica depois
-  if (
-    trimmedCRM === "000000" ||
-    trimmedCRM === "123456" ||
-    trimmedCRM === "111111" ||
-    trimmedCRM === "999999"
-  ) {
-    return false;
-  }
+  // if (
+  //   trimmedCRM === "000000" ||
+  //   trimmedCRM === "123456" ||
+  //   trimmedCRM === "111111" ||
+  //   trimmedCRM === "999999"
+  // ) {
+  //   return false;
+  // }
 
   return true;
 }

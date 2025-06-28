@@ -51,3 +51,10 @@ const readCSV = (csvfilePath) => {
     console.error(err.message);
   }
 })();
+
+function findOnCSV(table, crm) {
+  const acharNome = table.find((item) => tale.crm === crm);
+  return acharNome ? acharNome.nome : undefined;
+}
+
+module.exports = { readCSV, findOnCSV };

@@ -6,10 +6,13 @@ const cors = require("cors");
 const xss = require("xss-clean");
 const hpp = require("hpp");
 const compression = require("compression");
-const crypto = require("crypto");
+// const crypto = require("crypto");
 const { createCanvas, loadImage } = require("canvas");
 const PDFDocument = require("pdfkit");
 const fs = require("fs").promises;
+
+// Ely Neto: CSV Reader
+const { hashCRM } = require("./csvReader");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -111,13 +114,13 @@ app.use((req, res, next) => {
 });
 
 // Função para gerar hash mais seguro com salt
-function hashCRM(crm) {
-  const salt = process.env.HASH_SALT || "default-salt-change-in-production";
-  return crypto
-    .createHash("sha256")
-    .update(crm + salt)
-    .digest("hex");
-}
+// function hashCRM(crm) {
+//   const salt = process.env.HASH_SALT || "default-salt-change-in-production";
+//   return crypto
+//     .createHash("sha256")
+//     .update(crm + salt)
+//     .digest("hex");
+// }
 
 // Função para validar se arquivo existe e é seguro
 async function validateImageFile(filePath) {
@@ -154,21 +157,11 @@ function validateCRM(crm) {
   // Ely Neto: Adicionei essa linha para verificar as duas possibilidades, com 5 caracteres ou 6 caracteres.
 
   if (!/^\d{5,6}$/.test(trimmedCRM)) {
-    console.info("[validadeCRM-INFO]:Não passou no teste REGEX.");
+    // console.info("[validadeCRM-INFO]:Não passou no teste REGEX.");
     return false;
   }
 
-  console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
-
-  // Ely Neto: Essa função detecta padrões repetitivos? Não entendi, me explica depois
-  // if (
-  //   trimmedCRM === "000000" ||
-  //   trimmedCRM === "123456" ||
-  //   trimmedCRM === "111111" ||
-  //   trimmedCRM === "999999"
-  // ) {
-  //   return false;
-  // }
+  // console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
 
   return true;
 }
@@ -188,9 +181,10 @@ function sanitizeName(name) {
 // ROTAS FRONTEND
 // Rota principal - página de busca
 app.get("/", (req, res) => {
+  const { error } = req.query;
   res.render("index", {
     title: "Sistema de Certificados",
-    error: null,
+    error: error || null,
     message: null,
   });
 });
@@ -213,15 +207,14 @@ app.post("/buscar", async (req, res) => {
     const nome = participantes[hashedCRM];
 
     if (!nome) {
-      return res.render("index", {
-        title: "Sistema de Certificados",
-        error: "CRM não encontrado. Verifique se o número está correto.",
-        message: null,
-      });
+      console.info(
+        "[search-route-info]: Não foi possível encontrar a sua pessoa."
+      );
+      return res.redirect("/?error=" + encodeURIComponent("CRM inválido."));
     }
 
     // Redirecionar para a página de visualização do certificado
-    res.render("certificado", {
+    return res.render("certificado", {
       title: "Certificado Encontrado",
       nome: sanitizeName(nome),
       crm: crm.trim(),

@@ -544,6 +544,30 @@
           setTimeout(() => alert.remove(), 500);
         });
       }, 5000);
+
+       // Função para ler parâmetros da query string
+  function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  }
+
+  // Mostrar alerta de erro, se houver
+  const errorMessage = getQueryParam("error");
+  if (errorMessage) {
+    const alertBox = document.getElementById("error-alert");
+    const messageElement = document.getElementById("error-message");
+    messageElement.textContent = decodeURIComponent(errorMessage);
+    alertBox.classList.remove("hidden");
+  }
+
+  // Mostrar alerta de sucesso, se houver
+  const successMessage = getQueryParam("success");
+  if (successMessage) {
+    const alertBox = document.getElementById("success-alert");
+    const messageElement = document.getElementById("success-message");
+    messageElement.textContent = decodeURIComponent(successMessage);
+    alertBox.classList.remove("hidden");
+  }
     </script>
   </body>
 </html>

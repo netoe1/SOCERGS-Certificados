@@ -13,9 +13,17 @@ const fs = require("fs").promises;
 
 // Ely Neto: CSV Reader
 const { hashCRM } = require("./csvReader");
-
+const {
+  validateImageFile,
+  validateCRM,
+  sanitizeName,
+  configSignals,
+} = require("./utils");
+// Ely Neto: Parametrização do servidor
 const app = express();
 const PORT = process.env.PORT || 3000;
+const TIMEOUT_AMOUNT = 30000;
+const KEEP_ALIVE_TIMEOUT = 5000;
 
 // Configurar EJS
 app.set("view engine", "ejs");
@@ -123,21 +131,21 @@ app.use((req, res, next) => {
 // }
 
 // Função para validar se arquivo existe e é seguro
-async function validateImageFile(filePath) {
-  try {
-    const resolvedPath = path.resolve(filePath);
-    const baseDir = path.resolve(__dirname);
+// async function validateImageFile(filePath) {
+//   try {
+//     const resolvedPath = path.resolve(filePath);
+//     const baseDir = path.resolve(__dirname);
 
-    if (!resolvedPath.startsWith(baseDir)) {
-      throw new Error("Caminho inválido");
-    }
+//     if (!resolvedPath.startsWith(baseDir)) {
+//       throw new Error("Caminho inválido");
+//     }
 
-    await fs.access(resolvedPath, fs.constants.R_OK);
-    return resolvedPath;
-  } catch (error) {
-    throw new Error("Arquivo de certificado não encontrado ou inacessível");
-  }
-}
+//     await fs.access(resolvedPath, fs.constants.R_OK);
+//     return resolvedPath;
+//   } catch (error) {
+//     throw new Error("Arquivo de certificado não encontrado ou inacessível");
+//   }
+// }
 
 // Lista de participantes com CRM hasheado
 const participantes = {
@@ -146,39 +154,38 @@ const participantes = {
   [hashCRM("111222")]: "João Pedro Martins",
 };
 
-// Validação mais rigorosa do CRM
-function validateCRM(crm) {
-  if (!crm || typeof crm !== "string") {
-    return false;
-  }
+// // Validação mais rigorosa do CRM
+// function validateCRM(crm) {
+//   if (!crm || typeof crm !== "string") {
+//     return false;
+//   }
 
-  const trimmedCRM = crm.trim();
+//   const trimmedCRM = crm.trim();
 
-  // Ely Neto: Adicionei essa linha para verificar as duas possibilidades, com 5 caracteres ou 6 caracteres.
+//   // Ely Neto: Adicionei essa linha para verificar as duas possibilidades, com 5 caracteres ou 6 caracteres.
 
-  if (!/^\d{5,6}$/.test(trimmedCRM)) {
-    // console.info("[validadeCRM-INFO]:Não passou no teste REGEX.");
-    return false;
-  }
+//   if (!/^\d{5,6}$/.test(trimmedCRM)) {
+//     // console.info("[validadeCRM-INFO]:Não passou no teste REGEX.");
+//     return false;
+//   }
+//   // console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
 
-  // console.info("[validateCRM()-INFO]: Passou no teste do REGEX.");
+//   return true;
+// }
 
-  return true;
-}
+// // Sanitizar nome para prevenir injeções
+// function sanitizeName(name) {
+//   if (!name || typeof name !== "string") {
+//     return "";
+//   }
 
-// Sanitizar nome para prevenir injeções
-function sanitizeName(name) {
-  if (!name || typeof name !== "string") {
-    return "";
-  }
+//   return name
+//     .replace(/[<>\"'&]/g, "")
+//     .substring(0, 100)
+//     .trim();
+// }
 
-  return name
-    .replace(/[<>\"'&]/g, "")
-    .substring(0, 100)
-    .trim();
-}
-
-// ROTAS FRONTEND
+//#region ROTAS_FRONTEND
 // Rota principal - página de busca
 app.get("/", (req, res) => {
   const { error } = req.query;
@@ -332,7 +339,9 @@ app.get("/certificado/:crm", async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor." });
   }
 });
+//#endregion ROTAS_FRONTEND
 
+//#region ROTAS_ERRO
 // Middleware para capturar rotas não encontradas
 app.use((req, res) => {
   console.warn(
@@ -351,31 +360,19 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: "Erro interno do servidor." });
 });
 
-// Configuração mais segura do servidor
+//#endregion ROTAS_ERRO
+
+//#region SERVER_LISTEN
 const server = app.listen(PORT, "127.0.0.1", () => {
   console.log(`Servidor rodando de forma segura em http://127.0.0.1:${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || "development"}`);
 });
 
-// Configurações de timeout
-server.timeout = 30000;
-server.keepAliveTimeout = 5000;
+//#endregion SERVER_LISTEN
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("Recebido SIGTERM. Encerrando servidor graciosamente...");
-  server.close(() => {
-    console.log("Servidor encerrado.");
-    process.exit(0);
-  });
-});
+server.timeout = TIMEOUT_AMOUNT;
+server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT;
 
-process.on("SIGINT", () => {
-  console.log("Recebido SIGINT. Encerrando servidor graciosamente...");
-  server.close(() => {
-    console.log("Servidor encerrado.");
-    process.exit(0);
-  });
-});
+configSignals();
 
 module.exports = app;

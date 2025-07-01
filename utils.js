@@ -30,23 +30,24 @@ function sanitizeName(name) {
     .trim();
 }
 
-async function validateImageFile(filePath) {
-  try {
-    const resolvedPath = path.resolve(filePath);
-    const baseDir = path.resolve(__dirname);
+// async function validateImageFile(filePath) {
+//   try {
+//     const resolvedPath = path.resolve(filePath);
+//     const baseDir = path.resolve(__dirname);
 
-    if (!resolvedPath.startsWith(baseDir)) {
-      throw new Error("Caminho inválido");
-    }
+//     if (!resolvedPath.startsWith(baseDir)) {
+//       throw new Error("Caminho inválido");
+//     }
 
-    await fs.access(resolvedPath, fs.constants.R_OK);
-    return resolvedPath;
-  } catch (error) {
-    throw new Error("Arquivo de certificado não encontrado ou inacessível");
-  }
-}
+//     await fs.access(resolvedPath, fs.constants.R_OK);
+//     return resolvedPath;
 
-function configSignals() {
+//   } catch (error) {
+//     throw new Error("Arquivo de certificado não encontrado ou inacessível");
+//   }
+// }
+
+function configSignals(server) {
   process.on("SIGTERM", () => {
     console.log("[SIGTERM]:Encerrando servidor.");
     server.close(() => {
@@ -64,7 +65,7 @@ function configSignals() {
   });
 }
 module.exports = {
-  validateImageFile,
+  // validateImageFile,
   validateCRM,
   sanitizeName,
   configSignals,

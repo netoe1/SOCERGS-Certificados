@@ -267,9 +267,12 @@ app.get("/certificado/:crm", async (req, res) => {
     }
 
     // Validar arquivo de imagem
-    const imagePath = await validateImageFile(
-      path.join(__dirname, "certificado-base.png")
-    );
+    console.log("\t" + path.join(__dirname, "certificado-base.png"));
+    // const imagePath = await validateImageFile(
+    //   path.join(__dirname, "certificado-base.png")
+    // );
+
+    const imagePath =  path.join(__dirname, "certificado-base.png")
     const image = await loadImage(imagePath);
 
     const canvas = createCanvas(image.width, image.height);
@@ -373,6 +376,6 @@ const server = app.listen(PORT, "127.0.0.1", () => {
 server.timeout = TIMEOUT_AMOUNT;
 server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT;
 
-configSignals();
+configSignals(server);
 
 module.exports = app;

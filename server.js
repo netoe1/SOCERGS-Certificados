@@ -187,15 +187,13 @@ const participantes = {
 
 //#region ROTAS_FRONTEND
 // Rota principal - página de busca
-app.get("/", async (req, res) => {
+app.get("/", (req, res) => {
   const { error } = req.query;
   res.render("index", {
     title: "Sistema de Certificados",
     error: error || null,
     message: null,
   });
-
-  const x = await hashAllCSV("teste.csv", true);
 });
 
 // Rota para processar formulário

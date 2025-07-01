@@ -1,5 +1,6 @@
 const fs = require("fs");
 const crypto = require("crypto");
+const { resolveObjectURL } = require("buffer");
 let csvParser;
 
 // Tenta importar csv-parser e avisa caso não esteja instalado
@@ -12,27 +13,55 @@ try {
 }
 
 // ===== Região: Leitura do CSV =====
-const readCSV = (csvfilePath) => {
-  // Validação da extensão
+const readCSV = (csvfilePath, tlwr_header = false) => {
+  // Valida se o caminho do arquivo termina com ".csv"
   if (!csvfilePath.endsWith(".csv")) {
-    throw new Error("[csvReader.js-err]: O arquivo não é válido.");
+    throw new Error("[readCSV()-err]: O arquivo não é .csv");
   }
 
-  // Validação de existência
+  // Verifica se o arquivo existe no sistema de arquivos
   if (!fs.existsSync(csvfilePath)) {
-    throw new Error("[csvReader.js-err]: O arquivo não existe.");
+    throw new Error("[readCSV()-err]: O arquivo não existe.");
   }
 
-  // Retorna uma Promise com os dados lidos
+  // Retorna uma Promise que será resolvida com os dados lidos do CSV
   return new Promise((resolve, reject) => {
-    const resultados = [];
+    const resultados = []; // Array que vai armazenar as linhas do CSV como objetos
 
+    // Cria um stream de leitura do arquivo CSV e conecta ao parser
     fs.createReadStream(csvfilePath)
-      .pipe(csvParser())
-      .on("data", (dados) => resultados.push(dados)) // Cada linha vira um objeto
-      .on("end", () => resolve(resultados)) // Fim da leitura
+      .pipe(
+        csvParser({
+          // Opção para mapear os headers (nomes das colunas)
+          mapHeaders: ({ header }) => {
+            // Converte os nomes das colunas para minúsculas, se parâmetro for true
+            return tlwr_header ? header.toLowerCase() : header;
+          },
+        })
+      )
+      // Cada evento 'data' recebe uma linha do CSV como objeto, que é adicionado ao array
+      .on("data", (dados) => resultados.push(dados))
+      // Evento chamado quando a leitura do CSV termina
+      .on("end", () => {
+        // Verifica se o array está vazio (sem dados lidos)
+        if (resultados.length === 0) {
+          // Rejeita a Promise com erro informando CSV vazio ou inválido
+          return reject(
+            new Error(
+              "[readCSV()-err]: O CSV está vazio ou objeto está vazio. Cheque as colunas."
+            )
+          );
+        }
+        // Se tudo certo, resolve a Promise com o array de objetos
+        resolve(resultados);
+      })
+      // Evento de erro na leitura do arquivo CSV
       .on("error", (err) =>
-        reject(new Error("Erro ao ler o CSV: " + err.message))
+        reject(
+          new Error(
+            "[readCSV()-err]: Erro inesperado ao ler o CSV: " + err.message
+          )
+        )
       );
   });
 };
@@ -56,8 +85,20 @@ function findOnCSV(table, crm) {
 
 // ===== Região: Gerar mapa com hash do CSV =====
 // Lê o CSV, gera hash dos CRMs e monta um objeto { hashCRM: nome }
-async function hashAllCSV(csvfilePath) {
-  const dados = await readCSV(csvfilePath);
+async function hashAllCSV(csvfilePath, tlwr_header) {
+  if (typeof tlwr_header != "boolean") {
+    throw new Error(
+      "[readCSV()-err]: Você não definiu da forma válida o parâmetro da função."
+    );
+  }
+  let dados;
+  try {
+    dados = await readCSV(csvfilePath, tlwr_header);
+  } catch (err) {
+    console.log("[hashAllCSV-err]:" + err);
+    return undefined;
+  }
+
   const mapa = {};
 
   for (const { crm, nome } of dados) {

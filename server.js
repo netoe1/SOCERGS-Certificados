@@ -12,7 +12,7 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs").promises;
 
 // Ely Neto: CSV Reader
-const { hashCRM } = require("./csvReader");
+const { hashCRM, hashAllCSV } = require("./csvReader");
 const {
   validateImageFile,
   validateCRM,
@@ -187,13 +187,15 @@ const participantes = {
 
 //#region ROTAS_FRONTEND
 // Rota principal - página de busca
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   const { error } = req.query;
   res.render("index", {
     title: "Sistema de Certificados",
     error: error || null,
     message: null,
   });
+
+  const x = await hashAllCSV("teste.csv", true);
 });
 
 // Rota para processar formulário
@@ -272,7 +274,7 @@ app.get("/certificado/:crm", async (req, res) => {
     //   path.join(__dirname, "certificado-base.png")
     // );
 
-    const imagePath =  path.join(__dirname, "certificado-base.png")
+    const imagePath = path.join(__dirname, "certificado-base.png");
     const image = await loadImage(imagePath);
 
     const canvas = createCanvas(image.width, image.height);
